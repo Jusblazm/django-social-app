@@ -21,11 +21,28 @@ class UserRegistrationForm(forms.ModelForm):
         if cd['password'] != cd['password2']:
             raise forms.ValidationError("Passwords don't match.")
         return cd['password2']
+    
+    def clean_email(self):
+        data = self.cleaned_data['email'].lower()
+        user = get_user_model()
+        # User never imported. book and official repo never mention this.
+        if user.objects.filter(email=data).exists():
+            raise forms.ValidationError('Email already in use.')
+        return data
 
 class UserEditForm(forms.ModelForm):
     class Meta:
         model = get_user_model()
         fields = ['first_name', 'last_name', 'email']
+
+    def clean_email(self):
+        data = self.cleaned_data['email'].lower()
+        user = get_user_model()
+        # User never imported. book and official repo never mention this.
+        qs = user.objects.exclude(id=self.instance.id).filter(email=data)
+        if qs.exists():
+            raise forms.ValidationError('Email already in use.')
+        return data
 
 class ProfileEditForm(forms.ModelForm):
     class Meta:
