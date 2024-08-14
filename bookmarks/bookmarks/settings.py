@@ -34,6 +34,9 @@ ALLOWED_HOSTS = ['mysite.com', 'localhost', '127.0.0.1']
 INSTALLED_APPS = [
     # My apps
     'account.apps.AccountConfig',
+    'images.apps.ImagesConfig',
+
+    # Libraries
     'django_extensions',
     'social_django',
 
