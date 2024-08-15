@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
     # Libraries
     'django_extensions',
+    'easy_thumbnails',
     'social_django',
 
     # Django apps
