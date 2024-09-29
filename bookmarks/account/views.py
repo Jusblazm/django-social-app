@@ -6,6 +6,8 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 from .forms import LoginForm, ProfileEditForm, UserEditForm, UserRegistrationForm
 from .models import Contact, Profile
+from actions.models import Action
+from actions.utils import create_action
 
 # Create your views here.
 
@@ -31,9 +33,16 @@ def user_login(request):
 
 @login_required
 def dashboard(request):
+    # display all actions by default
+    actions = Action.objects.exclude(user=request.user)
+    following_ids = request.user.following.values_list('id', flat=True)
+    if following_ids:
+        # if user is following others, retrieve only their actions
+        actions = actions.filter(user_id__in=following_ids)
+    actions = actions.select_related('user', 'user__profile').prefetch_related('target')[:10]
     return render(request,
                   'account/dashboard.html',
-                  {'section': 'dashboard'})
+                  {'section': 'dashboard', 'actions': actions})
 
 @login_required
 def edit(request):
@@ -68,6 +77,7 @@ def register(request):
             new_user.save()
             # create the user profile
             Profile.objects.create(user=new_user)
+            create_action(new_user, 'has created an account')
             return render(request,
                           'account/register_done.html',
                           {'new_user': new_user})
@@ -110,6 +120,7 @@ def user_follow(request):
                     user_from=request.user,
                     user_to=user
                 )
+                create_action(request.user, 'is following', user)
             else:
                 Contact.objects.filter(
                     user_from=request.user,
